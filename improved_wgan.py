@@ -124,21 +124,19 @@ class WassersteinGAN (object):
                     [self.d_loss, self.g_loss, self.summary_op], feed_dict={self.x: bx, self.z: bz}
                 )
 
+                bx_hat = self.sess.run(self.x_, feed_dict={self.z: bz})
+                eng = cal_energy(bx_hat)
+                dd = cal_defect_density(bx_hat)
+
                 print('Iter [%8d] Time [%5.4f] d_loss [%.4f] g_loss [%.4f]' %
                     (t, time.time() - start_time, d_loss, g_loss))
+
+                print ('\t[ICE States]: Eval Total Energy %.6f, Defect Density %.6f' %  (eng, dd))
 
                 self.writer.add_summary(summary, global_step=t)
 
             if t % SAMPLE_PER_ITERS == 0:
                 bz = self.z_sampler(BATCH_SIZE, self.z_dim)
-                bx = self.sess.run(self.x_, feed_dict={self.z: bz})
-
-                eng = cal_energy(bx)
-                dd = cal_defect_density(bx)
-
-                print ('Iter [%8d] Time [%5.4f]: Eval Total Energy %.6f, Defect Density %.6f' % 
-                           (t, time.time()-start_time, eng, dd))
-
                 ## save images
                 bx = grid_transform(bx, self.x_dim)
                 imsave('images/{}.png'.format(t/SAMPLE_PER_ITERS), bx)
