@@ -39,7 +39,7 @@ def cal_energy(bx):
                 se *= s[i,j]
                 eng += se
         total_mean_eng += (eng/N/2.0)
-    return total_mean_eng
+    return total_mean_eng / batch_size
 
 def cal_defect_density(bx):
     shape = bx.shape
@@ -62,7 +62,7 @@ def cal_defect_density(bx):
                     se = float(s[i][j] + s[i][jp] + s[ip][j] + s[ip][jp])
                 dd += abs(se)
         total_defect_den += (dd/N/2.0)
-    return total_defect_den 
+    return total_defect_den / batch_size
 
 def variable_summaries(var):
   with tf.name_scope('summaries'):
