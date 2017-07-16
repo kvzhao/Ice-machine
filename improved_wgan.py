@@ -6,7 +6,7 @@ import time
 import numpy as np
 
 from visualize import *
-from utils import cal_energy, cal_defect_density
+from utils import cal_energy, cal_defect_density, spinization
 from scipy.misc import imsave
 
 from constants import LEARNING_RATE_D
@@ -124,14 +124,17 @@ class WassersteinGAN (object):
                     [self.d_loss, self.g_loss, self.summary_op], feed_dict={self.x: bx, self.z: bz}
                 )
 
-                bx_hat = self.sess.run(self.x_, feed_dict={self.z: bz})
-                eng = cal_energy(bx_hat)
-                dd = cal_defect_density(bx_hat)
+                bx_ = self.sess.run(self.x_, feed_dict={self.z: bz})
+                eng = cal_energy(bx_)
+                dd = cal_defect_density(bx_)
+                eng_th = cal_energy(spinization(bx_))
+                dd_th  = cal_defect_density(spinization(bx_))
 
                 print('Iter [%8d] Time [%5.4f] d_loss [%.4f] g_loss [%.4f]' %
                     (t, time.time() - start_time, d_loss, g_loss))
 
-                print ('\t[ICE States]: Eval Total Energy %.6f, Defect Density %.6f' %  (eng, dd))
+                print ('[ICE States on Generated Data]: Eval Total Energy %.6f, Defect Density %.6f' %  (eng, dd))
+                print ('[ICE States on Thresholed Data]: Eval Total Energy %.6f, Defect Density %.6f' %  (eng_th, dd_th))
 
                 self.writer.add_summary(summary, global_step=t)
 

@@ -13,6 +13,11 @@ def relu_batch_norm(x):
 def pdb(s, d, l):
     return ((s+d) % l + l) % l
 
+def spinization (bx, threshold=.75):
+    bx[bx >= +threshold] = 1.0
+    bx[bx <= -threshold] = -1.0
+    return bx
+
 def cal_energy(bx):
     shape = bx.shape
     batch_size = shape[0]
