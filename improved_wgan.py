@@ -76,11 +76,18 @@ class WassersteinGAN (object):
         gpu_options = tf.GPUOptions(allow_growth=True)
         self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
-        # logger file
-        logfile = '/'.join(['logs', TASK_NAME])
-        if tf.gfile.Exists(logfile):
-            tf.gfile.DeleteRecursively(logfile)
-        tf.gfile.MakeDirs(logfile)
+        # logger file creation
+        self.logfile = '/'.join(['logs', TASK_NAME])
+        self.ckptfile = '/'.join(['checkpoints', TASK_NAME])
+
+        if tf.gfile.Exists(self.logfile):
+            tf.gfile.DeleteRecursively(self.logfile)
+        tf.gfile.MakeDirs(self.logfile)
+        if not tf.gfile.Exists(self.ckptfile):
+            tf.gfile.MakeDirs(self.ckptfile)
+        else:
+            # CKPT CHECKS and LOAD (TODO)
+            pass
 
         with tf.name_scope('summaries'):
             g_loss_sum = tf.summary.scalar('G_loss', self.g_loss)
@@ -90,7 +97,7 @@ class WassersteinGAN (object):
 
         # Saver
         self.saver = tf.train.Saver()
-        self.writer = tf.summary.FileWriter(logfile, self.sess.graph)
+        self.writer = tf.summary.FileWriter(self.logfile, self.sess.graph)
 
 
 
@@ -145,7 +152,7 @@ class WassersteinGAN (object):
                 imsave('images/{}.png'.format(t/SAMPLE_PER_ITERS), bx)
 
             if t % SAVE_CKPT_PER_ITERS == 0:
-                self.saver.save(self.sess, 'checkpoints/'+TASK_NAME, global_step=t)
+                self.saver.save(self.sess, self.ckptfile + '/model', global_step=t)
     
     def sample(self):
         pass
