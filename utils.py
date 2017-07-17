@@ -18,6 +18,11 @@ def spinization (bx, threshold=.75):
     bx[bx <= -threshold] = -1.0
     return bx
 
+def binarization (bx, threshold=.75):
+    bx[bx >= +threshold] = 1.0
+    bx[bx <= +threshold] = -1.0
+    return bx
+
 def cal_energy(bx):
     shape = bx.shape
     batch_size = shape[0]
