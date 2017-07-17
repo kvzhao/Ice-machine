@@ -6,7 +6,7 @@ import time
 import numpy as np
 
 from visualize import *
-from utils import cal_energy, cal_defect_density, spinization
+from utils import *
 from scipy.misc import imsave
 
 from constants import LEARNING_RATE_D
@@ -80,14 +80,11 @@ class WassersteinGAN (object):
         self.logfile = '/'.join(['logs', TASK_NAME])
         self.ckptfile = '/'.join(['checkpoints', TASK_NAME])
 
-        if tf.gfile.Exists(self.logfile):
-            tf.gfile.DeleteRecursively(self.logfile)
-        tf.gfile.MakeDirs(self.logfile)
+        if not tf.gfile.Exists(self.logfile):
+            tf.gfile.MakeDirs(self.logfile)
+            #tf.gfile.DeleteRecursively(self.logfile)
         if not tf.gfile.Exists(self.ckptfile):
             tf.gfile.MakeDirs(self.ckptfile)
-        else:
-            # CKPT CHECKS and LOAD (TODO)
-            pass
 
         with tf.name_scope('summaries'):
             g_loss_sum = tf.summary.scalar('G_loss', self.g_loss)
@@ -99,6 +96,13 @@ class WassersteinGAN (object):
         self.saver = tf.train.Saver()
         self.writer = tf.summary.FileWriter(self.logfile, self.sess.graph)
 
+        # Checkpoints
+        checkpoint = tf.train.get_checkpoint_state(self.ckptfile)
+        if checkpoint and checkpoint.model_checkpoint_path:
+            self.saver.restore(self.sess, checkpoint.model_checkpoint_path)
+            print ('Restore checkpoints from {}'.format(checkpoint.model_checkpoint_path))
+        else:
+            print ('Can not find checkpoint files')
 
 
     def train(self):
@@ -142,17 +146,40 @@ class WassersteinGAN (object):
 
                 print ('[ICE States on Generated Data]: Eval Total Energy %.6f, Defect Density %.6f' %  (eng, dd))
                 print ('[ICE States on Thresholed Data]: Eval Total Energy %.6f, Defect Density %.6f' %  (eng_th, dd_th))
+                ## TODO: Save these results
 
                 self.writer.add_summary(summary, global_step=t)
 
             if t % SAMPLE_PER_ITERS == 0:
                 bz = self.z_sampler(BATCH_SIZE, self.z_dim)
+                bx_ = self.sess.run(self.x_, feed_dict={self.z: bz})
                 ## save images
-                bx = grid_transform(bx, self.x_dim)
-                imsave('images/{}.png'.format(t/SAMPLE_PER_ITERS), bx)
+                bx_ = grid_transform(bx_, self.x_dim)
+                imsave('images/{}.png'.format(t/SAMPLE_PER_ITERS), bx_)
 
             if t % SAVE_CKPT_PER_ITERS == 0:
                 self.saver.save(self.sess, self.ckptfile + '/model', global_step=t)
     
-    def sample(self):
-        pass
+    def sample(self, num_of_batches=1, visualize=False):
+        '''
+            Sample generators and calculated mean energy and density
+        '''
+        engs=[]
+        dds=[]
+        engs_th=[]
+        dds_th=[]
+        for i in range(num_of_batches):
+            bz = self.z_sampler(BATCH_SIZE, self.z_dim)
+            bx_ = self.sess.run(self.x_, feed_dict={self.z: bz})
+            np.save('/'.join(['tmp', 'bx_sampled_'+str(i)]), bx_)
+            eng = cal_energy(bx_)
+            dd = cal_defect_density(bx_)
+            eng_th = cal_energy(binarization(bx_))
+            dd_th  = cal_defect_density(binarization(bx_))
+            engs.append(eng)
+            engs_th.append(eng_th)
+            dds.append(dd)
+            dds_th.append(dd_th)
+            print ('[%dth Batch Generated Data]: Eval Total Energy %.6f, Defect Density %.6f' %  (i, eng, dd))
+            print ('[%dth Batch Thresholed Data]: Eval Total Energy %.6f, Defect Density %.6f' %  (i, eng_th, dd_th))
+        return engs, engs_th, dds, dds_th
