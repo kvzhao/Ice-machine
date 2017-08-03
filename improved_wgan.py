@@ -48,8 +48,11 @@ class WassersteinGAN (object):
         self.d_ = self.D(self.x_)
 
         # compute WGAN loss
+        # E[D(G(z))]
         self.g_loss = tf.reduce_mean(self.d_)
-        self.d_loss = tf.reduce_mean(self.d ) - tf.reduce_mean(self.d_)
+        # E_x[D(x)] - E_z[D(G(z))] = E_x[D(x)] - E_z[D(x_)] 
+        #self.d_loss = tf.reduce_mean(self.d ) - tf.reduce_mean(self.d_)
+        self.d_loss = tf.reduce_mean(self.d_) - tf.reduce_mean(self.d)
 
         eps = tf.random_uniform([], 0.0, 1.0)
         x_hat = eps * self.x + (1 - eps) * self.x_
@@ -123,14 +126,6 @@ class WassersteinGAN (object):
                 bx = self.x_sampler(BATCH_SIZE)
                 bz = self.z_sampler(BATCH_SIZE, self.z_dim)
 
-                '''
-                d_loss = self.sess.run(
-                    self.d_loss, feed_dict={self.x: bx, self.z: bz}
-                )
-                g_loss, summary = self.sess.run(
-                    self.g_loss, feed_dict={self.z: bz}
-                )
-                '''
                 d_loss, g_loss, summary = self.sess.run(
                     [self.d_loss, self.g_loss, self.summary_op], feed_dict={self.x: bx, self.z: bz}
                 )
@@ -138,8 +133,9 @@ class WassersteinGAN (object):
                 bx_ = self.sess.run(self.x_, feed_dict={self.z: bz})
                 eng = cal_energy(bx_)
                 dd = cal_defect_density(bx_)
-                eng_th = cal_energy(spinization(bx_))
-                dd_th  = cal_defect_density(spinization(bx_))
+                eng_th = cal_energy(binarization(bx_))
+                dd_th  = cal_defect_density(binarization(bx_))
+                # EVAL CORRELATION BETWEEN BATCHES
 
                 print('Iter [%8d] Time [%5.4f] d_loss [%.4f] g_loss [%.4f]' %
                     (t, time.time() - start_time, d_loss, g_loss))
