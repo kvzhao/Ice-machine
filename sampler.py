@@ -27,7 +27,6 @@ class NoiseSampler(object):
 class DataSampler(object):
     def __init__ (self):
         self.shape = [64, 64, 1]
-        #self.dim = 64 * 64 * 1
         self.dataset = read_data_sets(grayscale=False, reshape=True)
     
     def __call__(self, batch_size):
@@ -51,6 +50,7 @@ class DataSet(object):
                 #self._images = self._images.reshape((self._num_of_samples, self._dim))
             if(grayscale):
                 self._convert_to_grayscale()
+            #TODO: convert to two layers structure
 
         @property
         def images(self):
