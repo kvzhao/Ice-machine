@@ -10,6 +10,7 @@ from random import shuffle
 from constants import DATASET_PATH
 from constants import DATASET_NAME
 from constants import IMAGE_NAME
+from constants import GRAY_SCALE
 
 def read_data_sets(grayscale=False, reshape=False):
     h = h5py.File('/'.join([DATASET_PATH, DATASET_NAME]), 'r+')
@@ -27,7 +28,7 @@ class NoiseSampler(object):
 class DataSampler(object):
     def __init__ (self):
         self.shape = [64, 64, 1]
-        self.dataset = read_data_sets(grayscale=True, reshape=True)
+        self.dataset = read_data_sets(grayscale=GRAY_SCALE, reshape=True)
     
     def __call__(self, batch_size):
         return self.dataset.next_batch(batch_size)[0]
@@ -46,11 +47,12 @@ class DataSet(object):
             self._index_in_epoch = 0
             #self._dim = 64 * 64 * 1
             if (reshape):
+                # convert images to shape (64, 64, 1)
                 self._images = self._images[..., np.newaxis]
-                #self._images = self._images.reshape((self._num_of_samples, self._dim))
             if(grayscale):
+                # convert image pixels from [-1, 1] to [0, 1]
                 self._convert_to_grayscale()
-            #TODO: convert to two layers structure
+            #TODO: convert to two layers structure ch=0 contains spin up and ch=1 spin down
 
         @property
         def images(self):
