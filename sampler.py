@@ -27,7 +27,7 @@ class NoiseSampler(object):
 class DataSampler(object):
     def __init__ (self):
         self.shape = [64, 64, 1]
-        self.dataset = read_data_sets(grayscale=False, reshape=True)
+        self.dataset = read_data_sets(grayscale=True, reshape=True)
     
     def __call__(self, batch_size):
         return self.dataset.next_batch(batch_size)[0]
